@@ -33,6 +33,10 @@ public class DatingProfile {
     private long profileId;
 
     @NotBlank
+    @Setter(AccessLevel.NONE)
+    private String meta;
+
+    @NotBlank
     private String name;
 
     @Column(nullable = false)

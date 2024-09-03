@@ -27,6 +27,7 @@ public class DatingProfileDeserializer extends JsonDeserializer<DatingProfile> {
 
         return DatingProfile.builder()
                 .profileId(jsonProfile.get("id").asLong())
+                .meta(jsonProfile.get("extra").get("meta").asText())
                 .name(jsonProfile.get("name").asText())
                 .age(jsonProfile.get("age").asInt())
                 .description(jsonProfile.get("form").get("about").asText())
