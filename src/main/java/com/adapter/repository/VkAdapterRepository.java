@@ -8,4 +8,6 @@ public interface VkAdapterRepository extends JpaRepository<DatingProfile, Long> 
 
     @Query("SELECT EXISTS(SELECT p FROM DatingProfile p WHERE p.profileId = :profileId)")
     boolean isDatingProfileExist(long profileId);
+
+//    void updateDatingProfile(long profileId);
 }
