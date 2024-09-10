@@ -19,7 +19,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -29,7 +28,7 @@ import java.util.Map;
 public class VkAdapterService {
 
     private final VkAdapterRepository repository;
-    public List<DatingProfile> getProfile(String boundary,
+    public DatingProfile getProfile(String boundary,
                                           String token,
                                           String agent,
                                           String session,
@@ -50,46 +49,46 @@ public class VkAdapterService {
                 .POST(oMultipartData(data, boundary))
                 .build();
 
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> response;
+
         try {
-            HttpClient client = HttpClient.newHttpClient();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.body());
-
-            List<JsonNode> jsonProfiles = new ArrayList<>();
-            root.get("users").forEach(jsonProfiles::add);
-
-            List<DatingProfile> profileEntities = new ArrayList<>();
-
-            try {
-                DatingProfile profile = new ObjectMapper().readValue(jsonProfiles.get(0).toString(), DatingProfile.class);
-                profileEntities.add(profile);
-
-                if (!repository.isDatingProfileExist(profile.getProfileId())) {
-
-                    repository.save(profile);
-                }
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            return profileEntities;
-
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+
+        DatingProfile profile;
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonResponse = mapper.readTree(response.body());
+            JsonNode jsonProfile= jsonResponse.get("users").get(0);
+
+            profile = mapper.readValue(jsonProfile.toString(), DatingProfile.class);
+
+            if (repository.isDatingProfileExist(profile.getProfileId())) {
+                repository.deleteByProfileId(profile.getProfileId());
+            }
+
+            repository.save(profile);
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return profile;
     }
 
 
     public String replyProfile(String boundary,
-                               String user_id,
-                               String meta,
-                               String token,
-                               String agent,
-                               String session,
-                               String version,
-                               Reply reply) {
+                                             String user_id,
+                                             String meta,
+                                             String token,
+                                             String agent,
+                                             String session,
+                                             String version,
+                                             Reply reply) {
         Map<String, String> data = new HashMap<>();
 
         data.put("user_id", user_id);
